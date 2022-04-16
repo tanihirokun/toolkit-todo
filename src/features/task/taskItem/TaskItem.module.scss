@@ -38,3 +38,30 @@
     }
   }
 }
+
+
+.modal {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  .modal_content {
+    background: #ffffff;
+    width: 50vw;
+    height: 50vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 5px;
+
+    &:focus {
+      outline: none;
+    }
+
+    .modal_title {
+      margin-bottom: 20px;
+      font-size: 20px;
+    }
+  }
+}

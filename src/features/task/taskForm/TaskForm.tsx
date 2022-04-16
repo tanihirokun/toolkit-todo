@@ -1,18 +1,21 @@
-import React from "react";
-import { useDispatch } from "react-redux";
+import React, { FC } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import styles from "./TaskForm.module.scss";
-import Box from "@mui/material/Box";
 import TextField from "@mui/material/TextField";
 import { useForm } from "react-hook-form";
-import {createTask} from '../taskSlice'
-
+import {createTask, handleModalOpen, selectSelectedTask, editTask} from '../taskSlice'
 
 type Input = {
   taskTitle: string;
 };
 
-export const TaskForm = () => {
+type Props = {
+  edit?: boolean;
+}
+
+export const TaskForm: FC<Props> = ({edit}) => {
   const dispatch = useDispatch();
+  const selectedTask = useSelector(selectSelectedTask)
 
   const { register, handleSubmit, reset } = useForm<Input>();
 
@@ -21,27 +24,34 @@ export const TaskForm = () => {
     dispatch(createTask(data.taskTitle));
     reset();
   }
+  const handleEdit = (data: Input) => {
+    const sendData = {...selectedTask ,title: data.taskTitle}
+    dispatch(editTask(sendData))
+    dispatch(handleModalOpen(false))
+  }
 
   return (
     <div className={styles.root}>
-      <Box
-        component="form"
-        sx={{
-          "& > :not(style)": { m: 1, width: "95%" },
-        }}
-        noValidate
-        autoComplete="off"
+      <form
         className={styles.form}
-        onSubmit={handleSubmit(onSubmit)}
+        //editがtrueならhandleEditの処理が走り、falseならonSubmitが走る
+        onSubmit={edit ? handleSubmit(handleEdit) : handleSubmit(onSubmit)}
       >
         <TextField
           id="outlined-basic"
-          label="New Task"
+          label={edit ? 'Edit Task' : "New Task"}
+          defaultValue={edit ? selectedTask.title : ''}
           variant="outlined"
-          className={styles.text_fieid}
+          className={styles.text_field}
           {...register("taskTitle", { required: true })}
         />
-      </Box>
+        {edit ?
+          (<div className={styles.button_wrapper}>
+            <button type="submit" className={styles.submit_button}>Submit</button>
+            <button type="button" onClick={()=> dispatch(handleModalOpen(false))} className={styles.cancel_button}>Cancel</button>
+          </div>)
+         : null}
+      </form>
     </div>
   );
 };

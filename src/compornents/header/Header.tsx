@@ -14,7 +14,7 @@ export const Header:VFC = memo(() => {
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }} className={styles.title}>
             Redux Toolkit Todo
           </Typography>
-          <Button color="inherit">Login</Button>
+          <Button color="inherit">Logout</Button>
         </Toolbar>
       </AppBar>
     </Box>
