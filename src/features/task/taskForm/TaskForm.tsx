@@ -3,8 +3,14 @@ import { useDispatch, useSelector } from "react-redux";
 import styles from "./TaskForm.module.scss";
 import TextField from "@mui/material/TextField";
 import { useForm } from "react-hook-form";
-import {createTask, handleModalOpen, selectSelectedTask, editTask, fetchTasks} from '../taskSlice'
-import {AppDispatch} from '../../../app/store'
+import {
+  createTask,
+  handleModalOpen,
+  selectSelectedTask,
+  editTask,
+  fetchTasks,
+} from "../taskSlice";
+import { AppDispatch } from "../../../app/store";
 
 type Input = {
   taskTitle: string;
@@ -12,11 +18,11 @@ type Input = {
 
 type Props = {
   edit?: boolean;
-}
+};
 
-export const TaskForm: FC<Props> = ({edit}) => {
+export const TaskForm: FC<Props> = ({ edit }) => {
   const dispatch: AppDispatch = useDispatch();
-  const selectedTask = useSelector(selectSelectedTask)
+  const selectedTask = useSelector(selectSelectedTask);
 
   const { register, handleSubmit, reset } = useForm<Input>();
 
@@ -25,12 +31,13 @@ export const TaskForm: FC<Props> = ({edit}) => {
     await createTask(data.taskTitle);
     reset();
     dispatch(fetchTasks());
-  }
-  const handleEdit = (data: Input) => {
-    const sendData = {...selectedTask ,title: data.taskTitle}
-    dispatch(editTask(sendData))
+  };
+  const handleEdit = async (data: Input) => {
+    const sendData = { ...selectedTask, title: data.taskTitle };
+    await editTask(sendData);
     dispatch(handleModalOpen(false))
-  }
+    dispatch(fetchTasks());
+  };
 
   return (
     <div className={styles.root}>
@@ -41,18 +48,26 @@ export const TaskForm: FC<Props> = ({edit}) => {
       >
         <TextField
           id="outlined-basic"
-          label={edit ? 'Edit Task' : "New Task"}
-          defaultValue={edit ? selectedTask.title : ''}
+          label={edit ? "Edit Task" : "New Task"}
+          defaultValue={edit ? selectedTask.title : ""}
           variant="outlined"
           className={styles.text_field}
           {...register("taskTitle", { required: true })}
         />
-        {edit ?
-          (<div className={styles.button_wrapper}>
-            <button type="submit" className={styles.submit_button}>Submit</button>
-            <button type="button" onClick={()=> dispatch(handleModalOpen(false))} className={styles.cancel_button}>Cancel</button>
-          </div>)
-         : null}
+        {edit ? (
+          <div className={styles.button_wrapper}>
+            <button type="submit" className={styles.submit_button}>
+              Submit
+            </button>
+            <button
+              type="button"
+              onClick={() => dispatch(handleModalOpen(false))}
+              className={styles.cancel_button}
+            >
+              Cancel
+            </button>
+          </div>
+        ) : null}
       </form>
     </div>
   );

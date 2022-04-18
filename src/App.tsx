@@ -7,12 +7,20 @@ import { TaskForm } from "./features/task/taskForm/TaskForm";
 import { TaskList } from "./features/task/taskList/TaskList";
 import { fetchTasks } from "./features/task/taskSlice";
 import { AppDispatch } from "./app/store";
-
-import {auth} from './firebase'
+import { auth } from "./firebase";
+import {useNavigate} from 'react-router-dom'
 
 function App() {
-  console.log(auth)
   const dispatch: AppDispatch = useDispatch();
+  const navigate = useNavigate();
+
+  //ログインしていない人が直接HOME画面に行かないための処理
+  useEffect(() => {
+    auth.onAuthStateChanged((user) =>{
+      //渡される引数はユーザー情報　それがなかったらページ変える
+      !user && navigate('/user-auth')
+    }
+  )},[])
 
   useEffect(() => {
     const getData= ()=> {

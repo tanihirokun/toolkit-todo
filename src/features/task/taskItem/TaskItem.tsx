@@ -5,7 +5,8 @@ import EventNoteIcon from "@mui/icons-material/EventNote";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import Modal from "@mui/material/Modal";
-import { handleModalOpen, selectIsModalOpen, selectTask,completeTask,deleteTask } from "../taskSlice";
+import { handleModalOpen, selectIsModalOpen, selectTask,deleteTask, editTask, fetchTasks } from "../taskSlice";
+import { AppDispatch } from "../../../app/store";
 
 import styles from "./TaskItem.module.scss";
 import { TaskForm } from "../taskForm/TaskForm";
@@ -17,11 +18,10 @@ interface Props {
     completed: boolean;
   };
 }
-
 export const TaskItem: VFC<Props> = ({ task }) => {
   //reduxからインポートしたものを使えるようにする
   const isModalOpen = useSelector(selectIsModalOpen);
-  const dispatch = useDispatch();
+  const dispatch:AppDispatch = useDispatch();
 
   const handleOpen = () => {
     //propsにデータが入っているので引数に渡す
@@ -29,6 +29,16 @@ export const TaskItem: VFC<Props> = ({ task }) => {
     dispatch(handleModalOpen(true));
   }
   const handleClose = () => dispatch(handleModalOpen(false));
+
+  const handleEdit =async (id:string, title: string, completed: boolean) => {
+    const sendDate = {id, title, completed: !completed};
+    await editTask(sendDate);
+    dispatch(fetchTasks());
+  }
+  const handleDelete =async (id:string) => {
+    await deleteTask(id);
+    dispatch(fetchTasks());
+  }
 
   return (
     <div className={styles.root}>
@@ -39,14 +49,14 @@ export const TaskItem: VFC<Props> = ({ task }) => {
       <div className={styles.right_item}>
         <Checkbox
           checked={task.completed}
-          onClick={() => dispatch(completeTask(task))}
+          onClick={() => handleEdit(task.id, task.title, task.completed)}
           className={styles.checkbox}
         />
         <button onClick={handleOpen} className={styles.edit_button}>
           <EditIcon className={styles.icon} />
         </button>
         <button
-          onClick={() => dispatch(deleteTask(task))}
+          onClick={() => handleDelete(task.id)}
           className={styles.delete_button}
         >
           <DeleteIcon className={styles.icon} />

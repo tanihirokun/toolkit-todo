@@ -56,10 +56,36 @@ export const createTask = async (title: string) => {
 };
 
 //-----------------------------------
-//taskの新規作成
+//taskの編集
 //-----------------------------------
 
-
+export const editTask = async (submitData: {
+  id: string;
+  title: string;
+  completed: boolean;
+}): Promise<void> => {
+  const { id, title, completed } = submitData;
+  const dateTime = firebase.firestore.Timestamp.fromDate(new Date());
+  try {
+    await db
+      .collection("tasks")
+      .doc(id)
+      //mergeの意味は中身がある時は、更新する
+      .set({ title, completed, dateTime }, { merge: true });
+  } catch (error) {
+    console.log("Error updating document", error);
+  }
+};
+//-----------------------------------
+//taskの削除
+//-----------------------------------
+export const deleteTask = async (id: string): Promise<void> => {
+  try {
+    await db.collection("tasks").doc(id).delete();
+  } catch (error) {
+    console.log("Error removing document:", error);
+  }
+};
 
 export const taskSlice = createSlice({
   //作成するsliceの名前 actionTypeを生成するときにprefixとなる。
@@ -68,20 +94,6 @@ export const taskSlice = createSlice({
   initialState,
   // reducersの中身を記述
   reducers: {
-    //taskの編集
-    editTask: (state, action) => {
-      //state.tasksの中から指定したtaskを抜き出す
-      const task = state.tasks.find((t) => t.id === action.payload.id);
-      if (task) {
-        //抜き出したtaskのtitleを書き換える
-        task.title = action.payload.title;
-      }
-    },
-    //taskの削除
-    deleteTask: (state, action) => {
-      //指定したtask以外で新しくstate.tasksの配列を作成し直している
-      state.tasks = state.tasks.filter((t) => t.id !== action.payload.id);
-    },
     //どのtaskを選択しているか管理
     selectTask: (state, action) => {
       state.selectedTask = action.payload;
@@ -89,14 +101,6 @@ export const taskSlice = createSlice({
     //Modalを開くか閉じるかの管理
     handleModalOpen: (state, action) => {
       state.isModalOpen = action.payload;
-    },
-    //task完了・未完了のチェック変更
-    completeTask: (state, action) => {
-      const task = state.tasks.find((t) => t.id === action.payload.id);
-      if (task) {
-        //抜き出したtaskのcompletedを反転させる
-        task.completed = !task.completed;
-      }
     },
   },
   extraReducers: (builder) => {
@@ -109,13 +113,7 @@ export const taskSlice = createSlice({
   },
 });
 //作ったreducersの中身をexport
-export const {
-  handleModalOpen,
-  selectTask,
-  editTask,
-  completeTask,
-  deleteTask,
-} = taskSlice.actions;
+export const { handleModalOpen, selectTask } = taskSlice.actions;
 
 // コンポーネント側からuseSlectorを用いてselectTaskを指定することで
 // stateの値をコンポーネントに渡すことが可能
