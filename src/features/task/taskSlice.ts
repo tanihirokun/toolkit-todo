@@ -1,23 +1,65 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { RootState } from "../../app/store";
+import { db } from "../../firebase";
+import firebase from "firebase/compat/app";
 
 interface TaskState {
   //taskが何個あるか管理
   idCount: number;
   //storeに保存するtask一覧
-  tasks: { id: number; title: string; completed: boolean }[];
+  tasks: { id: string; title: string; completed: boolean }[];
   //taskのtitleを編集する際にどのtaskが選択されているか
-  selectedTask: { id: number; title: string; completed: boolean };
+  selectedTask: { id: string; title: string; completed: boolean };
   //Modalを開くか判断
   isModalOpen: boolean;
 }
 
 const initialState: TaskState = {
   idCount: 1,
-  tasks: [{ id: 1, title: "task A", completed: false }],
-  selectedTask: { id: 0, title: "", completed: false },
+  tasks: [],
+  selectedTask: { id: "", title: "", completed: false },
   isModalOpen: false,
 };
+
+//-----------------------------------
+//taskの全権取得
+//-----------------------------------
+export const fetchTasks = createAsyncThunk("task/getAllTasks", async () => {
+  //日付の降順（新しいデータが上に来る）にデータをソートしてtaskのデータを全件取得
+  //db.collectionはcloud firebaseのコレクションでつけた名前
+  //orderByは作られた中身のdateTime
+  const res = await db.collection("tasks").orderBy("dateTime", "desc").get();
+
+  //レスポンスの生成
+  const allTasks = res.docs.map((doc) => ({
+    id: doc.id,
+    title: doc.data().title,
+    completed: doc.data().completed,
+  }));
+
+  const taskNumber = allTasks.length;
+  const passData = { allTasks, taskNumber };
+  return passData;
+});
+//-----------------------------------
+//taskの新規作成
+//-----------------------------------
+export const createTask = async (title: string) => {
+  try {
+    const dateTime = firebase.firestore.Timestamp.fromDate(new Date());
+    await db
+      .collection("tasks")
+      .add({ title: title, completed: false, dateTime: dateTime });
+  } catch (error) {
+    console.log("Error writing document:", error);
+  }
+};
+
+//-----------------------------------
+//taskの新規作成
+//-----------------------------------
+
+
 
 export const taskSlice = createSlice({
   //作成するsliceの名前 actionTypeを生成するときにprefixとなる。
@@ -26,20 +68,6 @@ export const taskSlice = createSlice({
   initialState,
   // reducersの中身を記述
   reducers: {
-    //taskの作成
-    createTask: (state, action) => {
-      //idCountをプラス
-      state.idCount++;
-      //新しいtaskを作る
-      const newTask = {
-        id: state.idCount,
-        //TaskFormフォルダの dispatch(createTask(data.taskTitle));のデータが渡ってくる
-        title: action.payload,
-        completed: false,
-      };
-      //今までのタスクと合体
-      state.tasks = [newTask, ...state.tasks];
-    },
     //taskの編集
     editTask: (state, action) => {
       //state.tasksの中から指定したtaskを抜き出す
@@ -50,9 +78,9 @@ export const taskSlice = createSlice({
       }
     },
     //taskの削除
-    deleteTask: (state,action) => {
+    deleteTask: (state, action) => {
       //指定したtask以外で新しくstate.tasksの配列を作成し直している
-      state.tasks= state.tasks.filter((t) => t.id !== action.payload.id)
+      state.tasks = state.tasks.filter((t) => t.id !== action.payload.id);
     },
     //どのtaskを選択しているか管理
     selectTask: (state, action) => {
@@ -71,10 +99,17 @@ export const taskSlice = createSlice({
       }
     },
   },
+  extraReducers: (builder) => {
+    //stateとactionの型が正しく推論されるためにbuilder関数を用いる
+    builder.addCase(fetchTasks.fulfilled, (state, action) => {
+      //action.paylod === return passData
+      state.tasks = action.payload.allTasks;
+      state.idCount = action.payload.taskNumber;
+    });
+  },
 });
-
+//作ったreducersの中身をexport
 export const {
-  createTask,
   handleModalOpen,
   selectTask,
   editTask,
@@ -84,6 +119,7 @@ export const {
 
 // コンポーネント側からuseSlectorを用いてselectTaskを指定することで
 // stateの値をコンポーネントに渡すことが可能
+//RootStateはstoreからインポート
 export const selectTasks = (state: RootState): TaskState["tasks"] =>
   state.task.tasks;
 
