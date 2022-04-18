@@ -3,7 +3,8 @@ import { useDispatch, useSelector } from "react-redux";
 import styles from "./TaskForm.module.scss";
 import TextField from "@mui/material/TextField";
 import { useForm } from "react-hook-form";
-import {createTask, handleModalOpen, selectSelectedTask, editTask} from '../taskSlice'
+import {createTask, handleModalOpen, selectSelectedTask, editTask, fetchTasks} from '../taskSlice'
+import {AppDispatch} from '../../../app/store'
 
 type Input = {
   taskTitle: string;
@@ -14,15 +15,16 @@ type Props = {
 }
 
 export const TaskForm: FC<Props> = ({edit}) => {
-  const dispatch = useDispatch();
+  const dispatch: AppDispatch = useDispatch();
   const selectedTask = useSelector(selectSelectedTask)
 
   const { register, handleSubmit, reset } = useForm<Input>();
 
-  const onSubmit = (data: Input) => {
+  const handleCreate = async (data: Input) => {
     //data.taskTitleこの引数が action.payloadに渡される
-    dispatch(createTask(data.taskTitle));
+    await createTask(data.taskTitle);
     reset();
+    dispatch(fetchTasks());
   }
   const handleEdit = (data: Input) => {
     const sendData = {...selectedTask ,title: data.taskTitle}
@@ -35,7 +37,7 @@ export const TaskForm: FC<Props> = ({edit}) => {
       <form
         className={styles.form}
         //editがtrueならhandleEditの処理が走り、falseならonSubmitが走る
-        onSubmit={edit ? handleSubmit(handleEdit) : handleSubmit(onSubmit)}
+        onSubmit={edit ? handleSubmit(handleEdit) : handleSubmit(handleCreate)}
       >
         <TextField
           id="outlined-basic"

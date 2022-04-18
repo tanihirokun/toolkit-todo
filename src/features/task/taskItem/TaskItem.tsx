@@ -12,7 +12,7 @@ import { TaskForm } from "../taskForm/TaskForm";
 
 interface Props {
   task: {
-    id: number;
+    id: string;
     title: string;
     completed: boolean;
   };
